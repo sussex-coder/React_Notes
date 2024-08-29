@@ -1,3 +1,5 @@
+import './Note.css';
+
 function Note() {
   return (
     <div className="Note">
