@@ -10,8 +10,6 @@ root.render(
   <React.StrictMode>
     <App />
     <Note />
-    <Note />
-    <Note />
   </React.StrictMode>
 );
 
