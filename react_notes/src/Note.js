@@ -6,6 +6,7 @@ const Note = () => {
   const [inputE, setInputE] = useState(''); // English Input
   const [inputG, setInputG] = useState('');  // German Input
   const [index, getIndex] = useState('');
+  const [cardshow, switchSide] = useState(0);
 
   const addNote = () => {
     if (inputE.trim() !== '' && inputG.trim() !== ''){
@@ -24,6 +25,16 @@ const Note = () => {
     const gotNote = notes[index];
     alert(gotNote ? `${gotNote[1]} - ${gotNote[0]}` : 'Note not found');
   };
+
+  const ChangeCard = () => {
+
+        if(cardshow === 0){
+          switchSide(1)
+        }
+        else if (cardshow ===1){
+         switchSide(0)
+        }
+  }
 
   return (
     <div style={{ padding: '20px' }}>
@@ -65,9 +76,19 @@ const Note = () => {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <span style={{ marginRight: '10px' }}>{firstValue}</span>
-                <span>{secondValue}</span>
-                <button onClick={() => deleteNote(idx)} style={{ marginLeft: '10px' }}>
+                {cardshow === 0 ? firstValue : secondValue}
+                <button onClick={() => ChangeCard ()} style={{ marginLeft: '10px' }}>
+                  Show 
+                </button>
+                
+                <button onClick={() => deleteNote(idx)} 
+                style={{
+              position: 'absolute',
+              marginLeft: '-.9em',
+              marginTop: '3em', 
+              width: '25%', 
+              padding: '1em'
+            }}>
                   Delete
                 </button>
               </div>
@@ -82,7 +103,7 @@ const Note = () => {
           value={index}
           onChange={(e) => getIndex(e.target.value)}
           placeholder="Look up a note by Index..."
-          style={{ padding: '10px', width: '70%' }}
+          style={{ padding: '10px',marginTop:'3em', width: '70%'}}
         />
         <button onClick={getNote} style={{ padding: '10px 20px', marginLeft: '10px' }}>
           Search by Index
