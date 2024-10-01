@@ -1,114 +1,174 @@
-// src/components/Note.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Note = () => {
   const [notes, setNotes] = useState([]);
-  const [inputE, setInputE] = useState(''); // English Input
-  const [inputG, setInputG] = useState('');  // German Input
-  const [index, getIndex] = useState('');
-  const [cardshow, switchSide] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [inputE, setInputE] = useState('');
+  const [inputG, setInputG] = useState('');
+  const [flippedCards, setFlippedCards] = useState([]);
 
-  const addNote = () => {
-    if (inputE.trim() !== '' && inputG.trim() !== ''){
-      setNotes([...notes, [inputG, inputE]]);
-      setInputG('');
-      setInputE('');
+  useEffect(() => {
+    fetchCategories();
+    fetchNotes();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
-  const deleteNote = (index) => {
-    const newNotes = notes.filter((_, i) => i !== index);
-    setNotes(newNotes);
+  const fetchNotes = async (categoryId = '') => {
+    try {
+      const url = categoryId ? `/api/notes?category=${categoryId}` : '/api/notes';
+      const response = await fetch(url);
+      const data = await response.json();
+      setNotes(data);
+      setFlippedCards(new Array(data.length).fill(false));
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
   };
 
-  const getNote = () => {
-    const gotNote = notes[index];
-    alert(gotNote ? `${gotNote[1]} - ${gotNote[0]}` : 'Note not found');
+  const addNote = async () => {
+    if (inputE.trim() !== '' && inputG.trim() !== '' && selectedCategory) {
+      try {
+        const response = await fetch('/api/notes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            german: inputG, 
+            english: inputE, 
+            categoryId: selectedCategory 
+          }),
+        });
+        const newNote = await response.json();
+        setNotes([...notes, newNote]);
+        setFlippedCards([...flippedCards, false]);
+        setInputG('');
+        setInputE('');
+      } catch (error) {
+        console.error('Error adding note:', error);
+      }
+    }
   };
 
-  const ChangeCard = () => {
+  const deleteNote = async (id) => {
+    try {
+      await fetch(`/api/notes/${id}`, {
+        method: 'DELETE',
+      });
+      const newNotes = notes.filter(note => note.id !== id);
+      setNotes(newNotes);
+      setFlippedCards(flippedCards.filter((_, i) => notes[i].id !== id));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
+  };
 
-        if(cardshow === 0){
-          switchSide(1)
-        }
-        else if (cardshow ===1){
-         switchSide(0)
-        }
-  }
+  const flipCard = (idx) => {
+    const newFlippedCards = [...flippedCards];
+    newFlippedCards[idx] = !newFlippedCards[idx];
+    setFlippedCards(newFlippedCards);
+  };
+
+  const handleCategoryChange = (e) => {
+    const categoryId = e.target.value;
+    setSelectedCategory(categoryId);
+    fetchNotes(categoryId);
+  };
+
+
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>My Notes</h2>
+  
       <div>
+        <select 
+          value={selectedCategory} 
+          onChange={handleCategoryChange}
+          style={{ padding: '10px', marginRight: '10px' }}
+        >
+          <option value="">Select a category</option>
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           value={inputG}
           onChange={(e) => setInputG(e.target.value)}
-          placeholder="Enter a German note..."
-          style={{ padding: '10px', width: '45%', marginRight: '10px' }}
+          placeholder={
+    selectedCategory
+      ? `Enter a ${categories.find(category => category.id === Number(selectedCategory))?.name || ''} word`
+      : ''
+  }
+          style={{ padding: '10px', width: '30%', marginRight: '10px' }}
         />
         <input
           type="text"
           value={inputE}
           onChange={(e) => setInputE(e.target.value)}
-          placeholder="Enter an English note..."
-          style={{ padding: '10px', width: '45%' }}
+          placeholder={selectedCategory
+      ? `Enter an English translation`
+      : ''}
+          style={{ padding: '10px', width: '30%' }}
         />
         <button onClick={addNote} style={{ padding: '10px 20px', marginLeft: '10px' }}>
           Add Note
         </button>
       </div>
-
       <ul style={{ marginTop: '20px', listStyleType: 'none', padding: 0 }}>
-        {notes.map((note, idx) => {
-          const [firstValue, secondValue] = note;  // Deconstruct note into German and English parts
-          return (
-            <li
-              key={idx}
+        {notes.map((note, idx) => (
+          <li
+            key={note.id}
+            style={{
+              marginBottom: '20px',
+              padding: '10px',
+              backgroundColor: '#f9f9f9',
+              border: '1px solid #ddd',
+              borderRadius: '5px',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <div
               style={{
-                marginBottom: '10px',
-                padding: '10px',
-                backgroundColor: '#f9f9f9',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                marginBottom: '10px',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                {cardshow === 0 ? firstValue : secondValue}
-                <button onClick={() => ChangeCard ()} style={{ marginLeft: '10px' }}>
-                  Show 
-                </button>
-                
-                <button onClick={() => deleteNote(idx)} 
-                style={{
-              position: 'absolute',
-              marginLeft: '-.9em',
-              marginTop: '3em', 
-              width: '25%', 
-              padding: '1em'
-            }}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          );
-        })}
+              <div>{flippedCards[idx] ? note.english : note.german}</div>
+              <button onClick={() => flipCard(idx)} style={{ marginLeft: '10px' }}>
+                Flip
+              </button>
+            </div>
+            <button
+              onClick={() => deleteNote(note.id)}
+              style={{
+                width: '20%',
+                padding: '5px',
+                marginTop: '10px',
+              }}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
       </ul>
-
-      <div>
-        <input
-          type="text"
-          value={index}
-          onChange={(e) => getIndex(e.target.value)}
-          placeholder="Look up a note by Index..."
-          style={{ padding: '10px',marginTop:'3em', width: '70%'}}
-        />
-        <button onClick={getNote} style={{ padding: '10px 20px', marginLeft: '10px' }}>
-          Search by Index
-        </button>
-      </div>
     </div>
   );
 };
