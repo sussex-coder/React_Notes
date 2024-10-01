@@ -128,6 +128,7 @@ const Note = () => {
           Add Note
         </button>
       </div>
+      {selectedCategory ? (
       <ul style={{ marginTop: '20px', listStyleType: 'none', padding: 0 }}>
         {notes.map((note, idx) => (
           <li
@@ -169,8 +170,11 @@ const Note = () => {
           </li>
         ))}
       </ul>
+      ):(
+      {}
+    )}
     </div>
   );
-};
 
+}
 export default Note;
