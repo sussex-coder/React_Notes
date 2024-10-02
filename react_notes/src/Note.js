@@ -7,11 +7,13 @@ const Note = () => {
   const [inputE, setInputE] = useState('');
   const [inputG, setInputG] = useState('');
   const [flippedCards, setFlippedCards] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null);
 
   useEffect(() => {
     fetchCategories();
     fetchNotes();
   }, []);
+
 
   const fetchCategories = async () => {
     try {
@@ -85,13 +87,48 @@ const Note = () => {
     fetchNotes(categoryId);
   };
 
+  const onDragStart = (e, index) => {
+    setDraggedItem(notes[index]);
+    e.dataTransfer.setData('text/plain', index);
+    e.target.style.opacity = '0.5';
+  };
+
+  const onDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    setDraggedItem(null);
+  };
+
+  const onDragOver = (e, index) => {
+    e.preventDefault();
+    const draggedOverItem = notes[index];
+
+    // If the item is dragged over itself, ignore
+    if (draggedItem === draggedOverItem) {
+      return;
+    }
+
+    // Filter out the currently dragged item
+    let newNotes = notes.filter(note => note !== draggedItem);
+
+    // Add the dragged item after the dragged over item
+    newNotes.splice(index, 0, draggedItem);
+
+    setNotes(newNotes);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const newFlippedCards = notes.map(note => flippedCards[notes.findIndex(n => n.id === note.id)]);
+    setFlippedCards(newFlippedCards);
+  };
+
 
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>My Notes</h2>
+      
   
-      <div>
+      <div style={{marginBottom:"1.5em"}}>
         <select 
           value={selectedCategory} 
           onChange={handleCategoryChange}
@@ -104,6 +141,8 @@ const Note = () => {
             </option>
           ))}
         </select>
+        </div>
+        <div>
         <input
           type="text"
           value={inputG}
@@ -133,6 +172,11 @@ const Note = () => {
         {notes.map((note, idx) => (
           <li
             key={note.id}
+            draggable
+            onDragStart={(e) => onDragStart(e, idx)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => onDragOver(e, idx)}
+            onDrop={onDrop}
             style={{
               marginBottom: '20px',
               padding: '10px',
@@ -171,7 +215,7 @@ const Note = () => {
         ))}
       </ul>
       ):(
-      {}
+      null
     )}
     </div>
   );

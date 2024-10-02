@@ -6,9 +6,11 @@ function App() {
     <div className="App">
      
         
-        <p>
-          Notes coming soon ...
-        </p>
+        <h2 style={{ fontSize:"2.5em"}}>
+            
+
+        Flashcards
+        </h2>
        
      
     </div>
